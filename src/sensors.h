@@ -1,18 +1,17 @@
 #include <Arduino.h>
 
-#define number_INT 2     // Total number of interrupts
-#define pingDelay 10     // How many milliseconds between each measurement ; keep > 5ms
-#define debugDelay 250   // How many milliseconds between each Serial.print ; keep > 200ms
+#define number_INT 4     // Total number of interrupts
+#define pingDelay 50     // How many milliseconds between each measurement ; keep > 5ms
+#define debugDelay 200   // How many milliseconds between each Serial.print ; keep > 200ms
 #define soundSpeed 343.0 // Speed of sound in m/s
-
-#define trig 4
-
-float distance[number_INT]; // Calculated distances in cm
 
 volatile unsigned long travelTime[number_INT]; // Place to store traveltime of the pusle
 volatile unsigned long startTime[number_INT];  // Place to store ping times (interrupt)
+float distance[number_INT];                    // Calculated distances in cm
 unsigned long lastPollMillis;
 unsigned long lastDebugMillis;
+
+#define trig 14
 
 // Common function for interrupts
 void interruptHandler(bool pinState, int nIRQ)
@@ -42,7 +41,7 @@ void call_INT1()
 {
     byte pinRead;
     // pinRead = digitalRead(pin_INT0);     // Slower ; Read pin 21
-    pinRead = PIND << 1 & B0001; // Faster ; Read pin 21/PD0
+    pinRead = PIND >> 1 & B0001; // Faster ; Read pin 21/PD0
     interruptHandler(pinRead, 1);
 }
 
@@ -50,7 +49,7 @@ void call_INT2()
 {
     byte pinRead;
     // pinRead = digitalRead(pin_INT0);     // Slower ; Read pin 21
-    pinRead = PIND << 2 & B0001; // Faster ; Read pin 21/PD0
+    pinRead = PIND >> 2 & B0001; // Faster ; Read pin 21/PD0
     interruptHandler(pinRead, 2);
 }
 
@@ -58,24 +57,13 @@ void call_INT3()
 {
     byte pinRead;
     // pinRead = digitalRead(pin_INT0);     // Slower ; Read pin 21
-    pinRead = PIND << 3 & B0001; // Faster ; Read pin 21/PD0
+    pinRead = PIND >> 3 & B0001; // Faster ; Read pin 21/PD0
     interruptHandler(pinRead, 3);
-}
-
-void call_INT4()
-{
-    byte pinRead;
-    // pinRead = digitalRead(pin_INT0);     // Slower ; Read pin 21
-    pinRead = PINE & B0001; // Faster ; Read pin 21/PD0
-    interruptHandler(pinRead, 4);
 }
 
 void doMeasurement()
 {
-    if (!(millis() - lastPollMillis >= pingDelay))
-    {
-        return;
-    }
+
     // First read will be 0 (no distance  calculated yet)
     // Read the previous result (pause interrupts while doing so)
     noInterrupts(); // cli()
@@ -90,14 +78,16 @@ void doMeasurement()
     digitalWrite(trig, HIGH); // HIGH pulse for at least 10µs
     delayMicroseconds(10);
     digitalWrite(trig, LOW); // Set LOW again
-
-    lastPollMillis = millis();
 }
 
-void attachInterrupts()
+void initSensors()
 {
-    attachInterrupt(digitalPinToInterrupt(21), call_INT0, CHANGE); // ISR for INT0
-    attachInterrupt(digitalPinToInterrupt(20), call_INT1, CHANGE); // ISR for INT1
-    attachInterrupt(digitalPinToInterrupt(19), call_INT2, CHANGE); // ISR for INT2
-    attachInterrupt(digitalPinToInterrupt(18), call_INT3, CHANGE); // ISR for INT2
+    pinMode(trig, OUTPUT);
+    pinMode(21, INPUT);
+    pinMode(20, INPUT);
+    pinMode(18, INPUT);
+
+    attachInterrupt(digitalPinToInterrupt(21), call_INT0, CHANGE);
+    attachInterrupt(digitalPinToInterrupt(20), call_INT1, CHANGE);
+    attachInterrupt(digitalPinToInterrupt(18), call_INT3, CHANGE);
 }
