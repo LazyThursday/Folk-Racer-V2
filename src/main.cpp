@@ -7,9 +7,7 @@ Servo steering;
 
 int sensorToPrint = 0;
 
-int avgDistanceArray[20];
-
-int avgDistanceIndex = 0;
+int myAngle = 90;
 
 void handleSerial()
 {
@@ -85,31 +83,25 @@ int getAverage(int arr[20])
 
 void handleSteering()
 {
-  avgDistanceArray[avgDistanceIndex] = distance[1];
-  int averageDistance = getAverage(avgDistanceArray);
-  if (averageDistance < 100)
+  if (distance[1] > 100)
   {
-    int angle = linearNormalizer(averageDistance, 50, 90, -1);
-    if (angle > 140)
-    {
-      angle = 140;
-    }
-    else if (angle < 20)
-    {
-      angle = 20;
-    }
-    Serial.println(angle);
-    steering.write(angle);
+    distance[1] = 100;
   }
-
-  if (avgDistanceIndex < 20)
+  int temp_angle = linearNormalizer(distance[1], 30, 90, -1);
+  if (abs(myAngle - temp_angle) < 10)
   {
-    avgDistanceIndex++;
+    return;
   }
-  else
+  if (temp_angle > 160)
   {
-    avgDistanceIndex = 0;
+    temp_angle = 160;
   }
+  else if (temp_angle < 20)
+  {
+    temp_angle = 20;
+  }
+  myAngle = temp_angle;
+  steering.write(myAngle);
 }
 
 void setup()

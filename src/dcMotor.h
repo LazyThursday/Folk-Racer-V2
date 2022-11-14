@@ -1,6 +1,6 @@
 #include <Arduino.h>
 
-#define dcInput1 5
+#define dcInput1 A2
 #define dcInput2 6
 
 #define minSteering 40  // Minumum Angle for steering
