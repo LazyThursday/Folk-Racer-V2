@@ -5,17 +5,27 @@
 
 Servo steering;
 
-#define maxDetectionDistance 130;
+#define maxDetectionDistance 130
+#define maxSpeed 250
 
 int sensorToPrint = 0;
 
-long lastChange = 0;
+long lastSteeringChange = 0;
+long lastDcChange = 0;
+long lastSpeedChange = 0;
+
 int previousAngle = 90;
 int tempAngle = 90;
 
-bool on;
+int reverseDistance = 20;
 
-String distances[number_INT];
+// only use this to SET the speed
+int setSpeed = 0;
+// use this when you want to change the target speed
+int targetSpeed = 0;
+int setAcceleration = 50; // m^2/s.
+
+bool motorsOn = true;
 
 void handleSerial()
 {
@@ -75,20 +85,11 @@ void handleSerial()
   }
   else if ("k")
   {
+    motorsOn = !motorsOn;
+    stopMotor();
   }
 
   return;
-}
-
-/*
-@param x: your input
-@param normalX: your center input
-@param normalY: your center output
-@param inversion: whether or not to flip the graph. -1 or 1. defaults to 1
-*/
-int angleNormalizer(int x, float normalX, int normalY, int inversion = 1)
-{
-  return (pow(x - normalX, 3) / pow(normalX, 1.75 + normalX / 240)) * inversion + normalY;
 }
 
 int speedNormalizer(int x)
@@ -96,21 +97,54 @@ int speedNormalizer(int x)
   return exp(x / 7);
 }
 
-void handleMovement()
+void handleDcMotor()
 {
-  if ((millis() - lastChange) < 350)
+  if ((distance[front] < 20) && (distance[frontLeft] < 20))
+  {
+    steering.write(60);
+    targetSpeed = 75;
+    reverse(setSpeed);
+    return;
+  }
+  else if ((distance[front] < 20) && (distance[frontRight] < 20))
+  {
+    steering.write(130);
+    targetSpeed = 75;
+    reverse(setSpeed);
+    return;
+  }
+
+  if (distance[front] > 113)
+  {
+    distance[front] = 113;
+  }
+  targetSpeed = speedNormalizer(distance[2]);
+  forward(setSpeed);
+}
+
+void handleSteering()
+{
+  if ((millis() - lastSteeringChange) < 350)
   {
     return;
   }
-  if (distance[4] > 150)
+  if (distance[left] > 150)
   {
-    distance[4] = 150;
+    distance[left] = 150;
   }
-  if (distance[3] > 150)
+  if (distance[right] > 150)
   {
-    distance[3] = 150;
+    distance[right] = 150;
   }
-  tempAngle = 90 - ((distance[4] - distance[3]) / 2.5);
+  if (distance[frontLeft] > 150)
+  {
+    distance[frontLeft] = 150;
+  }
+  if (distance[frontRight] > 150)
+  {
+    distance[frontRight] = 150;
+  }
+  tempAngle = 90 - ((distance[left] - distance[right]) / 5) + ((distance[frontRight] - distance[frontLeft]) / 5);
 
   // Serial.println(String(tempAngle) + " - " + String(distance[4]) + "cm");
   if ((tempAngle > 90 && previousAngle < 90) || (tempAngle < 90 && previousAngle > 90))
@@ -119,14 +153,25 @@ void handleMovement()
   }
   steering.write(tempAngle);
 
-  if (distance[2] > 113)
-  {
-    distance[2] = 113;
-  }
-  // forward(speedNormalizer(distance[2]));
-
   Serial.println(tempAngle);
-  lastChange = millis();
+  lastSteeringChange = millis();
+}
+
+void handleAcceleration()
+{
+  if (setSpeed == targetSpeed || (millis() - lastSpeedChange < 1000))
+  {
+    return;
+  }
+
+  if (abs(targetSpeed - setSpeed) < setAcceleration)
+  {
+    setSpeed += setAcceleration;
+  }
+  else
+  {
+    setSpeed = targetSpeed;
+  }
 }
 
 void setup()
@@ -150,6 +195,10 @@ void loop()
 
     lastPollMillis = millis();
   }
-
-  handleMovement();
+  if (motorsOn)
+  {
+    handleSteering();
+    handleAcceleration();
+    handleDcMotor();
+  }
 }

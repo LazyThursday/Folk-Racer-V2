@@ -1,5 +1,11 @@
 #include <Arduino.h>
 
+#define right 3
+#define left 4
+#define front 2
+#define frontRight 0
+#define frontLeft 1
+
 #define dcInput1 12
 #define dcInput2 13
 
