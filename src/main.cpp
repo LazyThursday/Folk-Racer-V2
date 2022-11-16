@@ -5,9 +5,17 @@
 
 Servo steering;
 
+#define maxDetectionDistance 130;
+
 int sensorToPrint = 0;
 
-int myAngle = 90;
+long lastChange = 0;
+int previousAngle = 90;
+int tempAngle = 90;
+
+bool on;
+
+String distances[number_INT];
 
 void handleSerial()
 {
@@ -65,56 +73,71 @@ void handleSerial()
     Serial.println("\n\n Showing sensor " + String(sensorToPrint) + "\n\n");
     delay(1500);
   }
+  else if ("k")
+  {
+  }
 
   return;
 }
 
-int getAverage(int arr[20])
+/*
+@param x: your input
+@param normalX: your center input
+@param normalY: your center output
+@param inversion: whether or not to flip the graph. -1 or 1. defaults to 1
+*/
+int angleNormalizer(int x, float normalX, int normalY, int inversion = 1)
 {
-  int total = 0;
-
-  for (int i = 0; i <= 20; i++)
-  {
-    total += arr[i];
-  }
-
-  return total / 20;
+  return (pow(x - normalX, 3) / pow(normalX, 1.75 + normalX / 240)) * inversion + normalY;
 }
 
-void handleSteering()
+int speedNormalizer(int x)
 {
-  if (distance[1] > 100)
-  {
-    distance[1] = 100;
-  }
-  int temp_angle = linearNormalizer(distance[1], 30, 90, -1);
-  if (abs(myAngle - temp_angle) < 10)
+  return exp(x / 7);
+}
+
+void handleMovement()
+{
+  if ((millis() - lastChange) < 350)
   {
     return;
   }
-  if (temp_angle > 160)
+  if (distance[4] > 150)
   {
-    temp_angle = 160;
+    distance[4] = 150;
   }
-  else if (temp_angle < 20)
+  if (distance[3] > 150)
   {
-    temp_angle = 20;
+    distance[3] = 150;
   }
-  myAngle = temp_angle;
-  steering.write(myAngle);
+  tempAngle = 90 - ((distance[4] - distance[3]) / 2.5);
+
+  // Serial.println(String(tempAngle) + " - " + String(distance[4]) + "cm");
+  if ((tempAngle > 90 && previousAngle < 90) || (tempAngle < 90 && previousAngle > 90))
+  {
+    steering.write(90);
+  }
+  steering.write(tempAngle);
+
+  if (distance[2] > 113)
+  {
+    distance[2] = 113;
+  }
+  // forward(speedNormalizer(distance[2]));
+
+  Serial.println(tempAngle);
+  lastChange = millis();
 }
 
 void setup()
 {
   Serial.begin(9600);
-  steering.attach(A1);
+  steering.attach(7);
 
   initSensors();
 
   pinMode(dcInput1, OUTPUT);
   pinMode(dcInput2, OUTPUT);
-
-  reverse(255);
 }
 
 void loop()
@@ -124,9 +147,9 @@ void loop()
   if (millis() - lastPollMillis >= pingDelay)
   {
     doMeasurement();
+
     lastPollMillis = millis();
   }
 
-  handleSteering();
-  delay(50);
+  handleMovement();
 }

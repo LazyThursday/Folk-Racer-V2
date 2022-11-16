@@ -1,17 +1,23 @@
 #include <Arduino.h>
 
-#define number_INT 4     // Total number of interrupts
+#define number_INT 5     // Total number of interrupts
 #define pingDelay 50     // How many milliseconds between each measurement ; keep > 5ms
 #define debugDelay 200   // How many milliseconds between each Serial.print ; keep > 200ms
 #define soundSpeed 343.0 // Speed of sound in m/s
 
 volatile unsigned long travelTime[number_INT]; // Place to store traveltime of the pusle
 volatile unsigned long startTime[number_INT];  // Place to store ping times (interrupt)
-float distance[number_INT];                    // Calculated distances in cm
+int distance[number_INT];                      // Calculated distances in cm
 unsigned long lastPollMillis;
 unsigned long lastDebugMillis;
 
-#define trig 14
+#define trig 15
+
+#define sensor0 21
+#define sensor1 20
+#define sensor2 19
+#define sensor3 18
+#define sensor4 3
 
 // Common function for interrupts
 void interruptHandler(bool pinState, int nIRQ)
@@ -61,6 +67,14 @@ void call_INT3()
     interruptHandler(pinRead, 3);
 }
 
+void call_INT4()
+{
+    byte pinRead;
+    // pinRead = digitalRead(pin_INT0);     // Slower ; Read pin 21
+    pinRead = PINE >> 5 & B0001; // Faster ; Read pin 21/PD0
+    interruptHandler(pinRead, 4);
+}
+
 void doMeasurement()
 {
 
@@ -83,11 +97,15 @@ void doMeasurement()
 void initSensors()
 {
     pinMode(trig, OUTPUT);
-    pinMode(21, INPUT);
-    pinMode(20, INPUT);
-    pinMode(18, INPUT);
+    pinMode(sensor0, INPUT);
+    pinMode(sensor1, INPUT);
+    pinMode(sensor2, INPUT);
+    pinMode(sensor3, INPUT);
+    pinMode(sensor4, INPUT);
 
-    attachInterrupt(digitalPinToInterrupt(21), call_INT0, CHANGE);
-    attachInterrupt(digitalPinToInterrupt(20), call_INT1, CHANGE);
-    attachInterrupt(digitalPinToInterrupt(18), call_INT3, CHANGE);
+    attachInterrupt(digitalPinToInterrupt(sensor0), call_INT0, CHANGE);
+    attachInterrupt(digitalPinToInterrupt(sensor1), call_INT1, CHANGE);
+    attachInterrupt(digitalPinToInterrupt(sensor2), call_INT2, CHANGE);
+    attachInterrupt(digitalPinToInterrupt(sensor3), call_INT3, CHANGE);
+    attachInterrupt(digitalPinToInterrupt(sensor4), call_INT4, CHANGE);
 }

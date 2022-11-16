@@ -1,7 +1,7 @@
 #include <Arduino.h>
 
-#define dcInput1 A2
-#define dcInput2 6
+#define dcInput1 12
+#define dcInput2 13
 
 #define minSteering 40  // Minumum Angle for steering
 #define MaxSteering 150 // Maximum Angle for steering
@@ -21,14 +21,4 @@ void reverse(int speed)
 void stopMotor()
 {
     analogWrite(dcInput1, 0);
-}
-
-int normalizer(int x, int normalX, int normalY)
-{
-    return pow(x - normalX, 3) / 3000 + normalY;
-}
-
-int linearNormalizer(int x, int normalX, int normalY, int inversion = 1)
-{
-    return (x - normalX) * 2.5 * inversion + normalY;
 }
