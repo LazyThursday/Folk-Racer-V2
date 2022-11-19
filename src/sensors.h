@@ -11,7 +11,13 @@ int distance[number_INT];                      // Calculated distances in cm
 unsigned long lastPollMillis;
 unsigned long lastDebugMillis;
 
-#define trig 15
+#define right 0
+#define left 2
+#define front 1
+#define frontRight 4
+#define frontLeft 3
+
+#define trig 17
 
 #define sensor0 21
 #define sensor1 20

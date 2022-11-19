@@ -85,6 +85,10 @@ void handleSerial()
   }
   else if ("k")
   {
+    if (!motorsOn)
+    {
+      delay(3000);
+    }
     motorsOn = !motorsOn;
     stopMotor();
   }
@@ -92,9 +96,10 @@ void handleSerial()
   return;
 }
 
-int speedNormalizer(int x)
+int speedNormalizer(int x, int w)
 {
-  return exp(x / 7);
+  return w * (log10(x + 20) / 0.07918124604);
+  // return x / 2;
 }
 
 void handleDcMotor()
@@ -114,20 +119,24 @@ void handleDcMotor()
     return;
   }
 
-  if (distance[front] > 113)
+  if (distance[front] > 400)
   {
-    distance[front] = 113;
+    distance[front] = 400;
   }
-  targetSpeed = speedNormalizer(distance[2]);
+
+  if (distance[front] > 200)
+  {
+    targetSpeed = speedNormalizer(distance[front], 7);
+  }
+  else
+  {
+    targetSpeed = speedNormalizer(distance[front], 4);
+  }
   forward(setSpeed);
 }
 
-void handleSteering()
+void resetMaxes()
 {
-  if ((millis() - lastSteeringChange) < 350)
-  {
-    return;
-  }
   if (distance[left] > 150)
   {
     distance[left] = 150;
@@ -136,23 +145,40 @@ void handleSteering()
   {
     distance[right] = 150;
   }
-  if (distance[frontLeft] > 150)
+  if (distance[frontLeft] > 300)
   {
-    distance[frontLeft] = 150;
+    distance[frontLeft] = 300;
   }
-  if (distance[frontRight] > 150)
+  if (distance[frontRight] > 300)
   {
-    distance[frontRight] = 150;
+    distance[frontRight] = 300;
   }
-  tempAngle = 90 - ((distance[left] - distance[right]) / 5) + ((distance[frontRight] - distance[frontLeft]) / 5);
+}
 
+void handleSteering()
+{
+  if ((millis() - lastSteeringChange) < 10)
+  {
+    return;
+  }
+  resetMaxes();
+  tempAngle = 90 - ((distance[left] - distance[right]) / 5) + ((distance[frontRight] - distance[frontLeft]) / 5);
   // Serial.println(String(tempAngle) + " - " + String(distance[4]) + "cm");
+  if (tempAngle > 130)
+  {
+    tempAngle = 130;
+  }
+  else if (tempAngle < 50)
+  {
+    tempAngle = 50;
+  }
   if ((tempAngle > 90 && previousAngle < 90) || (tempAngle < 90 && previousAngle > 90))
   {
     steering.write(90);
   }
   steering.write(tempAngle);
-
+  previousAngle = tempAngle;
+  // Serial.println(String(distance[left]) + " - " + String(distance[frontLeft]) + " - " + String(distance[front]) + " - " + String(distance[frontRight]) + " - " + String(distance[right]));
   Serial.println(tempAngle);
   lastSteeringChange = millis();
 }
