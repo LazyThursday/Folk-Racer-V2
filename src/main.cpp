@@ -5,8 +5,11 @@
 
 Servo steering;
 
-#define maxDetectionDistance 130
+#define frontMax 170
 #define maxSpeed 250
+
+#define sideMax 75
+#define frontSideMax 150
 
 int sensorToPrint = 0;
 
@@ -17,13 +20,13 @@ long lastSpeedChange = 0;
 int previousAngle = 90;
 int tempAngle = 90;
 
-int reverseDistance = 20;
+int reverseDistance = 10;
 
 // only use this to SET the speed
 int setSpeed = 0;
 // use this when you want to change the target speed
 int targetSpeed = 0;
-int setAcceleration = 50; // m^2/s.
+int setAcceleration = 100; // m^2/s.
 
 bool motorsOn = true;
 
@@ -96,10 +99,9 @@ void handleSerial()
   return;
 }
 
-int speedNormalizer(int x, int w)
+int speedNormalizer(int x, int a, int b)
 {
-  return w * (log10(x + 20) / 0.07918124604);
-  // return x / 2;
+  return (a * sqrt(x * (2 * b - x)) / b);
 }
 
 void handleDcMotor()
@@ -119,50 +121,45 @@ void handleDcMotor()
     return;
   }
 
-  if (distance[front] > 400)
+  if (distance[front] > frontMax)
   {
-    distance[front] = 400;
-  }
-
-  if (distance[front] > 200)
-  {
-    targetSpeed = speedNormalizer(distance[front], 7);
+    targetSpeed = 250 * max(1 - (abs(tempAngle - 90)), 0.7);
   }
   else
   {
-    targetSpeed = speedNormalizer(distance[front], 4);
+    targetSpeed = speedNormalizer(distance[front], frontMax, 100);
   }
   forward(setSpeed);
 }
 
 void resetMaxes()
 {
-  if (distance[left] > 150)
+  if (distance[left] > sideMax)
   {
-    distance[left] = 150;
+    distance[left] = sideMax;
   }
-  if (distance[right] > 150)
+  if (distance[right] > sideMax)
   {
-    distance[right] = 150;
+    distance[right] = sideMax;
   }
-  if (distance[frontLeft] > 300)
+  if (distance[frontLeft] > frontSideMax)
   {
-    distance[frontLeft] = 300;
+    distance[frontLeft] = frontSideMax;
   }
-  if (distance[frontRight] > 300)
+  if (distance[frontRight] > frontSideMax)
   {
-    distance[frontRight] = 300;
+    distance[frontRight] = frontSideMax;
   }
 }
 
 void handleSteering()
 {
-  if ((millis() - lastSteeringChange) < 10)
+  if ((millis() - lastSteeringChange) < 50)
   {
     return;
   }
   resetMaxes();
-  tempAngle = 90 - ((distance[left] - distance[right]) / 5) + ((distance[frontRight] - distance[frontLeft]) / 5);
+  tempAngle = 90 - ((distance[left] - distance[right]) / 1.95) - ((distance[frontLeft] - distance[frontRight]) / 1.95);
   // Serial.println(String(tempAngle) + " - " + String(distance[4]) + "cm");
   if (tempAngle > 130)
   {
@@ -179,20 +176,20 @@ void handleSteering()
   steering.write(tempAngle);
   previousAngle = tempAngle;
   // Serial.println(String(distance[left]) + " - " + String(distance[frontLeft]) + " - " + String(distance[front]) + " - " + String(distance[frontRight]) + " - " + String(distance[right]));
-  Serial.println(tempAngle);
+  Serial.println(String(distance[frontLeft]) + " - " + String(distance[frontRight]) + " | " + String(distance[left]) + " - " + String(distance[right]) + " | " + tempAngle);
   lastSteeringChange = millis();
 }
 
 void handleAcceleration()
 {
-  if (setSpeed == targetSpeed || (millis() - lastSpeedChange < 1000))
+  if (setSpeed == targetSpeed || (millis() - lastSpeedChange < 100))
   {
     return;
   }
 
   if (abs(targetSpeed - setSpeed) < setAcceleration)
   {
-    setSpeed += setAcceleration;
+    setSpeed += setAcceleration / 10;
   }
   else
   {
