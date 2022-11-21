@@ -8,8 +8,8 @@ Servo steering;
 #define frontMax 170
 #define maxSpeed 250
 
-#define sideMax 75
-#define frontSideMax 150
+#define sideMax 100
+#define frontSideMax 200
 
 int sensorToPrint = 0;
 
@@ -123,7 +123,7 @@ void handleDcMotor()
 
   if (distance[front] > frontMax)
   {
-    targetSpeed = 250 * max(1 - (abs(tempAngle - 90)), 0.7);
+    targetSpeed = 250 * max(1 - (abs(tempAngle - 90)), frontMax / 250);
   }
   else
   {
@@ -175,8 +175,6 @@ void handleSteering()
   }
   steering.write(tempAngle);
   previousAngle = tempAngle;
-  // Serial.println(String(distance[left]) + " - " + String(distance[frontLeft]) + " - " + String(distance[front]) + " - " + String(distance[frontRight]) + " - " + String(distance[right]));
-  Serial.println(String(distance[frontLeft]) + " - " + String(distance[frontRight]) + " | " + String(distance[left]) + " - " + String(distance[right]) + " | " + tempAngle);
   lastSteeringChange = millis();
 }
 
@@ -218,6 +216,7 @@ void loop()
 
     lastPollMillis = millis();
   }
+
   if (motorsOn)
   {
     handleSteering();

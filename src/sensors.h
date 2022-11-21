@@ -11,11 +11,11 @@ int distance[number_INT];                      // Calculated distances in cm
 unsigned long lastPollMillis;
 unsigned long lastDebugMillis;
 
-#define right 0
-#define left 2
-#define front 1
-#define frontRight 4
-#define frontLeft 3
+#define left 0
+#define frontLeft 1
+#define front 2
+#define frontRight 3
+#define right 4
 
 #define trig 17
 
@@ -23,7 +23,7 @@ unsigned long lastDebugMillis;
 #define sensor1 20
 #define sensor2 19
 #define sensor3 18
-#define sensor4 3
+#define sensor4 2
 
 // Common function for interrupts
 void interruptHandler(bool pinState, int nIRQ)
@@ -77,7 +77,7 @@ void call_INT4()
 {
     byte pinRead;
     // pinRead = digitalRead(pin_INT0);     // Slower ; Read pin 21
-    pinRead = PINE >> 5 & B0001; // Faster ; Read pin 21/PD0
+    pinRead = PINE >> 4 & B0001; // Faster ; Read pin 21/PD0
     interruptHandler(pinRead, 4);
 }
 
