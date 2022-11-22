@@ -7,15 +7,17 @@
 
 volatile unsigned long travelTime[number_INT]; // Place to store traveltime of the pusle
 volatile unsigned long startTime[number_INT];  // Place to store ping times (interrupt)
-int distance[number_INT];                      // Calculated distances in cm
+float distance[number_INT];                    // Calculated distances in cm
+float distanceData[number_INT][10];            // Calculated distances in cm array of 10
+int currentIncrement = 0;
 unsigned long lastPollMillis;
 unsigned long lastDebugMillis;
 
-#define left 0
-#define frontLeft 1
+#define left 4
+#define frontLeft 3
 #define front 2
-#define frontRight 3
-#define right 4
+#define frontRight 1
+#define right 0
 
 #define trig 17
 
@@ -24,6 +26,21 @@ unsigned long lastDebugMillis;
 #define sensor2 19
 #define sensor3 18
 #define sensor4 2
+
+// void handleAverging()
+// {
+//     for
+// }
+
+void debugNumOrder()
+{
+    for (int i = 0; i < number_INT; i++)
+    {
+        Serial.print(distance[i]);
+        Serial.print(" ");
+    }
+    Serial.println();
+}
 
 // Common function for interrupts
 void interruptHandler(bool pinState, int nIRQ)
@@ -89,7 +106,15 @@ void doMeasurement()
     noInterrupts(); // cli()
     for (int i = 0; i < number_INT; i++)
     {
-        distance[i] = travelTime[i] / 2.0 * (float)soundSpeed / 10000.0; // in cm
+        float tempDistance = travelTime[i] / 2.0 * (float)soundSpeed / 10000.0; // in cm
+        if (tempDistance < 200)
+        {
+            distance[i] = tempDistance;
+        }
+        else
+        {
+            distance[i] = 200;
+        }
     }
     interrupts(); // sei();
     // Initiate next trigger
