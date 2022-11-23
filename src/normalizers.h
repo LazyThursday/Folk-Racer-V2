@@ -1,8 +1,8 @@
 #include <Arduino.h>
 
-int eclipseSpeedNormalizer(float x, int b, int a)
+int eclipseSpeedNormalizer(float x, int c, int a)
 {
-    return a * sqrt(x * (2 * b - x)) / b;
+    return a * sqrt(x * (2 * c - x)) / c;
 }
 
 int logSpeedNormalizer(float x, int w, float b)

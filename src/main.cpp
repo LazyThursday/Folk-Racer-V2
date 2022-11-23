@@ -6,7 +6,7 @@
 
 Servo steering;
 
-#define frontMax 175
+#define frontMax 200
 #define maxSpeed 250
 
 #define sideMax 300
@@ -41,7 +41,7 @@ void handleDcMotor()
 {
   if (isReversing)
   {
-    if (distance[front] > 35)
+    if (distance[front] > 50)
     {
       isReversing = false;
       return;
@@ -76,15 +76,15 @@ void handleDcMotor()
 
   if (distance[front] > frontMax)
   {
-    targetSpeed = 150;
+    targetSpeed = 225;
   }
-  else if (distance[front] > 150)
+  else if (distance[front] > 125)
   {
-    targetSpeed = logSpeedNormalizer(distance[front], 6, 1.47);
+    targetSpeed = logSpeedNormalizer(distance[front], 6, 1.245);
   }
   else
   {
-    targetSpeed = eclipseSpeedNormalizer(distance[front], 1500, 200);
+    targetSpeed = eclipseSpeedNormalizer(distance[front], 1500, 350);
   }
 
   forward(targetSpeed);
@@ -100,25 +100,16 @@ void handleSteering()
   float differenceSide = (distance[left] - distance[right]) / maxSensorDistance;
   float differenceFrontSide = (distance[frontLeft] - distance[frontRight]) / maxSensorDistance;
 
-  // if (differenceFrontSide > 0.25 && differenceFrontSide < 0.5)
-  // {
-  //   differenceFrontSide = 0.5;
-  // }
-  // else if (differenceFrontSide < -0.25 && differenceFrontSide > -0.5)
-  // {
-  //   differenceFrontSide = -0.5;
-  // }
   differenceSide *= 0;
   targetAngle = (90.0 * (differenceFrontSide * -1 + 1.0));
-  Serial.print(differenceFrontSide);
-  Serial.println(" " + String(targetAngle));
-  if (targetAngle > 135)
+  
+  if (targetAngle > 140)
   {
-    targetAngle = 135;
+    targetAngle = 140;
   }
-  else if (targetAngle < 45)
+  else if (targetAngle < 40)
   {
-    targetAngle = 45;
+    targetAngle = 40;
   }
   if ((targetAngle > 90 && previousAngle < 90) || (targetAngle < 90 && previousAngle > 90))
   {
