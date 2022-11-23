@@ -12,5 +12,5 @@ int logSpeedNormalizer(float x, int w, float b)
 
 int angleNormalizer(float x)
 {
-    return (pow(x * -1.0, 3.0) / 0.02) + 90;
+    return (pow(x * -1.0, 3.0) / 0.01) + 90;
 }

@@ -80,14 +80,13 @@ void handleDcMotor()
   }
   else if (distance[front] > 150)
   {
-    targetSpeed = logSpeedNormalizer(distance[front], 6, 1.47) * 0.8;
+    targetSpeed = logSpeedNormalizer(distance[front], 6, 1.47);
   }
   else
   {
-    targetSpeed = eclipseSpeedNormalizer(distance[front], 1500, 200) * 0.8;
+    targetSpeed = eclipseSpeedNormalizer(distance[front], 1500, 200);
   }
 
-  Serial.println(String(targetSpeed) + " " + String(setSpeed));
   forward(targetSpeed);
 }
 
@@ -99,15 +98,20 @@ void handleSteering()
   }
   // resetMaxes();
   float differenceSide = (distance[left] - distance[right]) / maxSensorDistance;
-  float differenceFrontSide = (distance[frontLeft] - distance[frontRight]) / (distance[frontLeft] + distance[frontRight]);
+  float differenceFrontSide = (distance[frontLeft] - distance[frontRight]) / maxSensorDistance;
 
-  if (differenceFrontSide > 0.2 && differenceFrontSide < 0.5)
-  {
-    differenceFrontSide = 0.5;
-  }
-
+  // if (differenceFrontSide > 0.25 && differenceFrontSide < 0.5)
+  // {
+  //   differenceFrontSide = 0.5;
+  // }
+  // else if (differenceFrontSide < -0.25 && differenceFrontSide > -0.5)
+  // {
+  //   differenceFrontSide = -0.5;
+  // }
   differenceSide *= 0;
-  targetAngle = angleNormalizer(differenceFrontSide + differenceSide);
+  targetAngle = (90.0 * (differenceFrontSide * -1 + 1.0));
+  Serial.print(differenceFrontSide);
+  Serial.println(" " + String(targetAngle));
   if (targetAngle > 135)
   {
     targetAngle = 135;
@@ -177,6 +181,4 @@ void loop()
   handleSteering();
   handleAcceleration();
   handleDcMotor();
-
-  // Serial.println(String(targetSpeed) + " - " + String(setSpeed) + " | " + String(distance[front]));
 }
