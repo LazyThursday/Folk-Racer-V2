@@ -33,21 +33,28 @@ int targetSpeed = 0;
 int setAcceleration = 35; // m^2/s.
 
 bool isReversing = false;
+int finishedReversing = 0;
 
 // value between 0, 1
 float weight_sides, weight_frontSides;
 
 void handleDcMotor()
 {
+  if (finishedReversing > 15)
+  {
+    isReversing = false;
+    finishedReversing = 0;
+  }
   if (isReversing)
   {
     if (distance[front] > 50)
     {
-      isReversing = false;
+      finishedReversing++;
       return;
     }
     else
     {
+      finishedReversing--;
       return;
     }
   }
@@ -100,9 +107,9 @@ void handleSteering()
   float differenceSide = (distance[left] - distance[right]) / maxSensorDistance;
   float differenceFrontSide = (distance[frontLeft] - distance[frontRight]) / maxSensorDistance;
 
-  differenceSide *= 0;
+  float differenceSum = differenceFrontSide * 0.7 + differenceSide * 0.3;
   targetAngle = (90.0 * (differenceFrontSide * -1 + 1.0));
-  
+
   if (targetAngle > 140)
   {
     targetAngle = 140;
