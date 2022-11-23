@@ -27,6 +27,8 @@ unsigned long lastDebugMillis;
 #define sensor3 18
 #define sensor4 2
 
+#define maxSensorDistance 300
+
 // void handleAverging()
 // {
 //     for
@@ -107,13 +109,13 @@ void doMeasurement()
     for (int i = 0; i < number_INT; i++)
     {
         float tempDistance = travelTime[i] / 2.0 * (float)soundSpeed / 10000.0; // in cm
-        if (tempDistance < 200)
+        if (tempDistance < maxSensorDistance)
         {
             distance[i] = tempDistance;
         }
         else
         {
-            distance[i] = 200;
+            distance[i] = maxSensorDistance;
         }
     }
     interrupts(); // sei();

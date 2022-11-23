@@ -30,7 +30,7 @@ int reverseDistance = 10;
 int setSpeed = 0;
 // use this when you want to change the target speed
 int targetSpeed = 0;
-int setAcceleration = 75; // m^2/s.
+int setAcceleration = 35; // m^2/s.
 
 bool isReversing = false;
 
@@ -51,7 +51,7 @@ void handleDcMotor()
       return;
     }
   }
-  if ((distance[front] < 20) && (distance[frontLeft] < 25))
+  if ((distance[front] < 20) && (distance[frontLeft] < 20))
   {
     steering.write(50);
     targetSpeed = 75;
@@ -60,7 +60,7 @@ void handleDcMotor()
     isReversing = true;
     return;
   }
-  else if ((distance[front] < 20) && (distance[frontRight] < 25))
+  else if ((distance[front] < 20) && (distance[frontRight] < 20))
   {
     steering.write(130);
     targetSpeed = 75;
@@ -74,17 +74,21 @@ void handleDcMotor()
     digitalWrite(brakeLights, LOW);
   }
 
-  float steeringAngleFrac = 1.0 - (float(abs(targetAngle - 90)) / 90.0);
   if (distance[front] > frontMax)
   {
-    targetSpeed = steeringAngleFrac < 0.8 ? 250.0 * steeringAngleFrac : 250;
-    Serial.println(String(targetSpeed) + " " + String(setSpeed));
+    targetSpeed = 150;
+  }
+  else if (distance[front] > 150)
+  {
+    targetSpeed = logSpeedNormalizer(distance[front], 6, 1.47) * 0.8;
   }
   else
   {
-    targetSpeed = float(speedNormalizer(distance[front], frontMax)) * steeringAngleFrac;
+    targetSpeed = eclipseSpeedNormalizer(distance[front], 1500, 200) * 0.8;
   }
-  forward(setSpeed);
+
+  Serial.println(String(targetSpeed) + " " + String(setSpeed));
+  forward(targetSpeed);
 }
 
 void handleSteering()
@@ -94,17 +98,28 @@ void handleSteering()
     return;
   }
   // resetMaxes();
-  float differenceSide = (distance[left] - distance[right]) / (distance[left] + distance[right]);
+  float differenceSide = (distance[left] - distance[right]) / maxSensorDistance;
   float differenceFrontSide = (distance[frontLeft] - distance[frontRight]) / (distance[frontLeft] + distance[frontRight]);
 
-  differenceFrontSide *= 0.5;
-  differenceSide *= 0.5;
+  if (differenceFrontSide > 0.2 && differenceFrontSide < 0.5)
+  {
+    differenceFrontSide = 0.5;
+  }
+
+  differenceSide *= 0;
   targetAngle = angleNormalizer(differenceFrontSide + differenceSide);
+  if (targetAngle > 135)
+  {
+    targetAngle = 135;
+  }
+  else if (targetAngle < 45)
+  {
+    targetAngle = 45;
+  }
   if ((targetAngle > 90 && previousAngle < 90) || (targetAngle < 90 && previousAngle > 90))
   {
     steering.write(90);
   }
-  Serial.println(String(differenceFrontSide) + " " + String(differenceSide) + " - " + String(targetAngle));
 
   steering.write(targetAngle);
   previousAngle = targetAngle;
@@ -118,13 +133,14 @@ void handleAcceleration()
     return;
   }
 
-  if (targetSpeed < 80)
+  if (targetSpeed - setSpeed < 0)
   {
     setSpeed = targetSpeed;
+    lastSpeedChange = millis();
     return;
   }
 
-  if (abs(targetSpeed - setSpeed) < setAcceleration)
+  if (targetSpeed - setSpeed < setAcceleration)
   {
     setSpeed += setAcceleration / 100;
   }
@@ -132,6 +148,8 @@ void handleAcceleration()
   {
     setSpeed = targetSpeed;
   }
+
+  lastSpeedChange = millis();
 }
 
 void setup()
@@ -159,4 +177,6 @@ void loop()
   handleSteering();
   handleAcceleration();
   handleDcMotor();
+
+  // Serial.println(String(targetSpeed) + " - " + String(setSpeed) + " | " + String(distance[front]));
 }
